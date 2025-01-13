@@ -8,10 +8,3 @@ jobs:
       - uses: actions/checkout@v4
       - name: PRIMER PASO DEL SCRIPT
         run: echo Hello, world!
-        
-  cd: 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: SEGUNDO PASO DEL SCRIPT
-        run: echo segundo paso del script..  en ejecución
