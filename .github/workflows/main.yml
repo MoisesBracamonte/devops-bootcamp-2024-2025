@@ -20,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: SEGUNDO PASO DEL SCRIPT
-      - run: echo segundo paso del script..  en ejecución
+        run: echo segundo paso del script..  en ejecución
