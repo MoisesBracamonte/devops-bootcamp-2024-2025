@@ -1,11 +1,7 @@
 name: CI
-# Controls when the workflow will run
 on:
-  # ejecutar de forma manual el pipeline
   workflow_dispatch:
-# ejecutar los trabajos que se deseán realizar, esto se ejecutan de forma secuencial
 jobs:
-  # primer workflow, lo llamaremos CI
   ci:
     runs-on: ubuntu-latest
     steps:
