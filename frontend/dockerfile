@@ -1,0 +1,7 @@
+FROM node:hydrogen-slim 
+WORKDIR /app
+COPY package.json ./package.json
+RUN npm install --forzen-lockfile
+COPY . .
+EXPOSE 3001
+CMD ["npm", "run", "dev"]
