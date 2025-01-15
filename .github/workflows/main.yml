@@ -3,6 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches: [ devops ]
+env:
+  REGISTRY: rbmoises
+  IMAGE: devops
+  VERSION: v3
+
 jobs:
   # configuración del backend
   ci-backend: 
@@ -31,6 +36,15 @@ jobs:
         with: 
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.3.0
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+      - name: Docker Build
+        run: | 
+          cd backend 
+          docker build -t $REGISTRY/$IMAGE:agenda-backend-$VERSION .
+          docker push $REGISTRY/$IMAGE:agenda-backend-$VERSION
 
   ci-frontend: 
     runs-on: ubuntu-latest
@@ -57,3 +71,12 @@ jobs:
         with: 
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.3.0
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+      - name: Docker Build
+        run: | 
+          cd backend 
+          docker build -t $REGISTRY/$IMAGE:agenda-frontend-$VERSION .
+          docker push $REGISTRY/$IMAGE:agenda-frontend-$VERSION
