@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-frontend-deployment
+  namespace: agenda-namespace
+  labels: 
+    app: agenda-frontend-app
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: agenda-frontend-app
+  template:
+    metadata:
+      labels:
+        app: agenda-frontend-app
+    spec:
+      containers:
+        - name: agenda-frontend-deployment-container
+          image: rbmoises/devops:agenda-frontend-v2
+          volumeMounts:
+            - name: env-file
+              mountPath: /app/.env
+              subPath: .env
+          # envFrom: 
+          #   - configMapRef:
+          #       name: agenda-frontend-configmap
+          ports:
+            - containerPort: 3001
+          resources:
+            limits:
+              cpu: "1024m"
+              memory: "1024Mi"
+      volumes:
+        - name: env-file
+          configMap:  
+            name: agenda-frontend-configmap

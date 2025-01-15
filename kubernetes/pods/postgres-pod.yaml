@@ -1,0 +1,75 @@
+# configmap postres db
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agenda-postgres-configmap
+  namespace: agenda-namespace
+data:
+  POSTGRES_USER: "agenda-u"
+  POSTGRES_HOST: "agenda-db-pg"
+  POSTGRES_DB: "agenda-db"
+  POSTGRES_PASSWORD: "agenda-db"
+  POSTGRES_PORT: "5432"
+---
+
+#pv
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: agenda-postgres-pv
+  namespace: agenda-namespace
+spec: 
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /Users/mrodriguez/src/devops/agenda-app/backend/pg-db/data
+
+---
+
+#pvc a
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agenda-postgres-pvc
+  namespace: agenda-namespace
+spec: 
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+
+# pod postgres db
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agenda-postgres-pod
+  namespace: agenda-namespace
+spec:
+  containers:
+    - name: agenda-postgres-pod-container
+      image: postgres:17.0
+      envFrom:
+        - configMapRef:
+            name: agenda-postgres-configmap
+      ports:
+        - containerPort: 5432
+      resources:
+        limits:
+          cpu: "128m"
+          memory: "128Mi"
+      volumeMounts:
+        - name: agenda-postgres-data-pvc
+          mountPath: /var/lib/postgresql/data
+        - name: agenda-postgres-init
+          mountPath: /docker-entrypoint-initdb.d
+  volumes:
+    - name: agenda-postgres-data-pvc
+      persistentVolumeClaim:
+        claimName: agenda-postgres-pvc
+    - name: agenda-postgres-init
+      hostPath:
+        path: /Users/mrodriguez/src/devops/agenda-app/backend/pg-db/init-db

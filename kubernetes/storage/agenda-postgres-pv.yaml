@@ -1,0 +1,13 @@
+# PV 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: agenda-postgres-pv
+  namespace: agenda-namespace
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/postgres

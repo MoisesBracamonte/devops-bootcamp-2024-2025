@@ -1,0 +1,67 @@
+services:
+ # definimos contenedor frontend
+  frontend: 
+    build: ./frontend
+    depends_on:
+      - backend
+    container_name: agenda-frontend
+    image: rbmoises/devops:agenda-frontend-v2
+    ports: 
+      - ${PORT_FRONT}:${PORdocker T_FRONT}
+    volumes:
+      - ./frontend/:/app
+    env_file:
+      - ./frontend/.env
+    networks:
+      - agenda-app-network
+
+  # definimos contenedor backend
+  backend:
+    build: ./backend
+    depends_on:
+      - postgres_db
+      - redis_db
+    container_name: agenda-backend
+    image: rbmoises/devops:agenda-backend-v2
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+      - ./backend:/app
+    networks:
+      - agenda-app-network
+      
+  # instalacion base de datos en postgres
+  postgres_db:
+    image: postgres:17.0
+    container_name: ${POSTGRES_HOST}
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - ./backend/pg-db/data:/var/lib/postgresql/data
+      - ./backend/pg-db/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - agenda-app-network
+
+# instalación de redis para la gestión de base en cache
+  redis_db:
+    image: redis:alpine
+    container_name: ${REDIS_HOST}
+    restart: always
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+      - ./backend/redis-db:/data
+    networks:
+      - agenda-app-network
+    command: ["redis-server", "--appendonly", "yes"]
+
+# networks
+networks:
+  agenda-app-network:
+    external: true

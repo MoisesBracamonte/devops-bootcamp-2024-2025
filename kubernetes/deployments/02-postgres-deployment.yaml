@@ -1,0 +1,42 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-postgres-deployment
+  namespace: agenda-namespace
+  labels: 
+    app: agenda-postgres-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agenda-postgres-app
+  template:
+    metadata:
+      labels:
+        app: agenda-postgres-app
+    spec: 
+      containers:
+        - name: agenda-postgres-deployment-container
+          image: postgres:17.0
+          envFrom:
+            - configMapRef:
+                name: agenda-postgres-configmap
+          ports:
+            - containerPort: 5432
+          resources:
+            limits:
+              cpu: "128m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: agenda-postgres-data-pvc
+              mountPath: /var/lib/postgresql/data
+            - name: scripts
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: agenda-postgres-data-pvc
+          persistentVolumeClaim:
+            claimName: agenda-postgres-pvc
+        - name: scripts
+          configMap:
+            name: postgres-init-configmap

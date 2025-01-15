@@ -1,0 +1,7 @@
+- [x] corregir en auth.config.ts para que la url venga de la variable de entorno y no fija.
+- [x] generar el build de cada imagen
+- [x] subirla a dockerhub
+- [ ] en kubernete:
+  - [ ] separar los storage del yaml deployment para generar persistencia de datos ya que cada vez que elimino se elimina esa información. 
+  - [ ] volver hacer el deployment
+  - [ ] validar que el sistema esté corriendo de forma correcta.

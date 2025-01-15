@@ -1,0 +1,27 @@
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-redis-deployment
+  namespace: agenda-namespace
+  labels: 
+    app: agenda-redis-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agenda-redis-app
+  template:
+    metadata:
+      labels: 
+        app: agenda-redis-app
+    spec:
+      containers:
+        - name: agenda-redis-deployment-container
+          image: redis:alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: "128m"
+              memory: "128Mi"

@@ -1,0 +1,23 @@
+# config map backend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agenda-backend-configmap
+  namespace: agenda-namespace
+data: 
+  .env: |
+    STAGE: "dev" 
+    PORT: "3000"
+    URL: "http://localhost:3000"
+    POSTGRES_USER: "agenda-u"
+    POSTGRES_HOST: "agenda-postgres-app"
+    POSTGRES_DB: "agenda-db"
+    POSTGRES_PASSWORD: "agenda-db"
+    POSTGRES_PORT: "5432"
+    MAIL_HOST: "sandbox.smtp.mailtrap.io"
+    MAIL_PORT: "2525"
+    MAIL_USER: "75883cf4e9bba6"
+    MAIL_PASS: "4e62f318c3763e"
+    JWT_SEED: "s33d1nf0"
+    REDIS_HOST: "agenda-redis-app"
+    REDIS_PORT: "6379"

@@ -1,0 +1,325 @@
+# configuración ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: agenda-postgres-configmap
+  namespace: agenda-namespace
+data: 
+  POSTGRES_USER: "agenda-u"
+  POSTGRES_HOST: "agenda-db-pg"
+  POSTGRES_DB: "agenda-db"
+  POSTGRES_PASSWORD: "agenda-db"
+  POSTGRES_PORT: "5432"
+  PGDATA: "/var/lib/postgresql/data"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-configmap
+  namespace: agenda-namespace
+data:   
+  01_ebspa_app_schema.sql: |
+    \c agenda-db
+    create table organizations (
+      id bigint primary key generated always as identity,
+      name text,
+      industry text,
+      phone text,
+      address text,
+      num_employees int,
+      created_at timestamp default null,
+      updated_at timestamp default null
+    );
+
+    create table users (
+      id bigint primary key generated always as identity,
+      name text not null,
+      email text not null unique,
+      password text not null,
+      type_of_user text check (type_of_user in ('individual', 'organization')) not null,
+      phone text default null,
+      is_active text check (is_active in ('actived', 'disabled')) default 'disabled',
+      hash_account text default null,
+      is_validated text check (is_validated in('Y','N')) default 'N',
+      created_at timestamp default null,
+      updated_at timestamp default null
+    );
+
+    create table categories (
+      id bigint primary key generated always as identity,
+      name text not null,
+      description text,
+      user_id bigint default null,
+      organization_id bigint default null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint categories_user_organization_check check (
+        (
+          user_id is not null
+          and organization_id is null
+        )
+        or (
+          user_id is null
+          and organization_id is not null
+        )
+      ),
+      constraint categories_user_id_foreign foreign key (user_id) references users (id) on delete cascade,
+      constraint categories_organization_id_foreign foreign key (organization_id) references organizations (id) on delete cascade
+    );
+
+    create table services (
+      id bigint primary key generated always as identity,
+      name text not null,
+      prices numeric(8, 2) not null,
+      percentage int default null,
+      status text check (status in ('active', 'inactive')) default 'inactive',
+      user_id bigint default null,
+      organization_id bigint default null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint services_user_organization_check check (
+        (
+          user_id is not null
+          and organization_id is null
+        )
+        or (
+          user_id is null
+          and organization_id is not null
+        )
+      ),
+      constraint services_user_id_foreign foreign key (user_id) references users (id) on delete cascade,
+      constraint services_organization_id_foreign foreign key (organization_id) references organizations (id) on delete cascade
+    );
+
+    create table category_service (
+      id bigint primary key generated always as identity,
+      category_id bigint not null,
+      service_id bigint not null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint category_service_category_id_foreign foreign key (category_id) references categories (id) on delete cascade,
+      constraint category_service_service_id_foreign foreign key (service_id) references services (id) on delete cascade
+    );
+
+    create table clients (
+      id bigint primary key generated always as identity,
+      name text not null,
+      email text not null,
+      phone text not null,
+      user_id bigint default null,
+      organization_id bigint default null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint clients_user_organization_check check (
+        (
+          user_id is not null
+          and organization_id is null
+        )
+        or (
+          user_id is null
+          and organization_id is not null
+        )
+      ),
+      constraint clients_user_id_foreign foreign key (user_id) references users (id) on delete cascade,
+      constraint clients_organization_id_foreign foreign key (organization_id) references organizations (id) on delete cascade
+      
+    );
+
+    create unique index unique_email_per_user on clients (email, user_id) where user_id is not null;
+    create unique index unique_email_per_organization on clients (email, organization_id) where organization_id is not null;
+
+    create table reservations (
+      id bigint primary key generated always as identity,
+      start_date timestamptz default null,
+      end_date timestamptz default null,
+      canceled_date timestamptz default null,
+      note text,
+      status text check (status in ('done', 'reserved', 'canceled')) default 'reserved',
+      payment numeric(8, 2) not null,
+      bgcolor text default null,
+      hashsee text default null,
+      client_id bigint not null,
+      user_id bigint default null,
+      organization_id bigint default null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint reservations_client_id_foreign foreign key (client_id) references clients (id) on delete cascade,
+      constraint reservations_user_organization_check check (
+        (
+          user_id is not null
+          and organization_id is null
+        )
+        or (
+          user_id is null
+          and organization_id is not null
+        )
+      ),
+      constraint reservations_user_id_foreign foreign key (user_id) references users (id) on delete cascade,
+      constraint reservations_organization_id_foreign foreign key (organization_id) references organizations (id) on delete cascade
+    );
+
+    create table reservation_service (
+      id bigint primary key generated always as identity,
+      reservation_id bigint not null,
+      service_id bigint not null,
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint reservation_service_reservation_id_foreign foreign key (reservation_id) references reservations (id) on delete cascade,
+      constraint reservation_service_service_id_foreign foreign key (service_id) references services (id) on delete cascade
+    );
+
+    create table organization_users (
+      id bigint primary key generated always as identity,
+      user_id bigint,
+      organization_id bigint,
+      role text check (role in ('owner', 'employee')),
+      created_at timestamp default null,
+      updated_at timestamp default null,
+      constraint organization_users_user_id_foreign foreign key (user_id) references users (id),
+      constraint organization_users_organization_id_foreign foreign key (organization_id) references organizations (id)
+    );
+
+    CREATE TABLE user_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        session_token VARCHAR(255) NOT NULL, -- Token JWT o UUID para identificar la sesión
+        session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        session_end TIMESTAMP, -- Se completa cuando el usuario cierra sesión
+        revoked BOOLEAN DEFAULT FALSE, -- Si está en TRUE, indica que la sesión fue revocada
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  02_seed.sql: | 
+    -- Insert sample data into organizations
+    insert into
+      organizations (name, industry, phone, address, num_employees)
+    values
+      (
+        'TechCorp',
+        'Technology',
+        '123-456-7890',
+        '123 Tech Lane',
+        200
+      ),
+      (
+        'HealthPlus',
+        'Healthcare',
+        '987-654-3210',
+        '456 Health St',
+        150
+      );
+
+    -- Insert sample data into users
+    insert into
+      users (
+        name,
+        email,
+        password,
+        type_of_user,
+        phone,
+        is_active
+      )
+    values
+      (
+        'Moises Rodriguez',
+        'user@ebspa.com',
+        '123123123',
+        'organization',
+        '555-1234',
+        'actived'
+      ),
+      (
+        'Bob Smith',
+        'bob@example.com',
+        'password456',
+        'organization',
+        '555-5678',
+        'disabled'
+      );
+
+    -- Insert sample data into categories
+    insert into
+      categories (name, description, user_id)
+    values
+      (
+        'Software Development',
+        'All software related services',
+        1
+      ),
+      (
+        'Medical Services',
+        'Healthcare and medical services',
+        2
+      );
+
+    -- Insert sample data into services
+    insert into
+      services (name, prices, percentage, status, user_id)
+    values
+      ('Web Development', 1500.00, 10, 'active', 1),
+      ('Consultation', 200.00, 5, 'inactive', 2);
+
+    -- Insert sample data into category_service
+    insert into
+      category_service (category_id, service_id)
+    values
+      (1, 1),
+      (2, 2);
+
+    -- Insert sample data into clients
+    insert into
+      clients (name, email, phone, user_id)
+    values
+      (
+        'Charlie Brown',
+        'charlie@example.com',
+        '555-9876',
+        1
+      ),
+      (
+        'Diana Prince',
+        'diana@example.com',
+        '555-4321',
+        2
+      );
+
+    -- Insert sample data into reservations
+    insert into
+      reservations (
+        start_date,
+        end_date,
+        status,
+        payment,
+        client_id,
+        user_id
+      )
+    values
+      (
+        '2023-11-01 10:00:00+00',
+        '2023-11-01 12:00:00+00',
+        'reserved',
+        1500.00,
+        1,
+        1
+      ),
+      (
+        '2023-11-02 14:00:00+00',
+        '2023-11-02 15:00:00+00',
+        'done',
+        200.00,
+        2,
+        2
+      );
+
+    -- Insert sample data into reservation_service
+    insert into
+      reservation_service (reservation_id, service_id)
+    values
+      (1, 1),
+      (2, 2);
+
+    -- Insert sample data into organization_users
+    insert into
+      organization_users (user_id, organization_id, role)
+    values
+      (1, 1, 'owner'),
+      (2, 2, 'owner');

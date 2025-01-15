@@ -1,0 +1,12 @@
+# configmap frontend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agenda-frontend-configmap
+  namespace: agenda-namespace
+data:
+  .env: |
+    AUTH_SECRET: "2cX4eVBD3NvjbmNkFmxVnNvlutgP82MlNlEQq8q+Kq8="
+    NEXT_PUBLIC_API_URL: "http://agenda-backend-app:3000"
+    NEXT_PUBLIC_API_URL_CLIENT: "http://agenda-backend-app:3000"
+    PORT: 3001

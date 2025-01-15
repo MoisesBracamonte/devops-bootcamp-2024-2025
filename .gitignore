@@ -1,0 +1,13 @@
+# enviroments 
+frontend/.env
+backend/.env
+
+#node modules 
+frontend/node_modules
+backend/node_modules
+
+#DB
+backend/redis-db
+pg-db/data 
+
+#devops : En teoria debería sacar kubernetes del repositorio, investigar y ver como brindar la seguridad correspondiente.

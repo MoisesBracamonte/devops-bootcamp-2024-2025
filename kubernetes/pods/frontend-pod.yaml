@@ -1,0 +1,32 @@
+# configmap frontend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agenda-frontend-configmap
+  namespace: agenda-namespace
+data:
+  AUTH_SECRET: "2cX4eVBD3NvjbmNkFmxVnNvlutgP82MlNlEQq8q+Kq8="
+  NEXT_PUBLIC_API_URL: "http://agenda-backend:3000"
+  NEXT_PUBLIC_API_URL_CLIENT: "http://localhost:3000"
+  PORT: "3001"
+---
+#pod frontend
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agenda-frontend-pod
+  namespace: agenda-namespace
+# especificamos contenedor
+spec:
+  containers:
+    - name: agenda-frontend-pod-container
+      image: rbmoises/devops:agenda-frontend-v1
+      envFrom: 
+        - configMapRef:
+            name: agenda-frontend-configmap
+      ports:
+        - containerPort: 3001
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "500Mi"
