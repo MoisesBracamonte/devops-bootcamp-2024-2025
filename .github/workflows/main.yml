@@ -27,82 +27,74 @@ jobs:
           DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           echo "::set-output name=date::$DATE"
 
-  use-envs: 
+  ci-backend: 
     runs-on: ubuntu-latest
-    needs: [ enviroments ]
+    steps: 
+      - uses: actions/checkout@v4
+      - name: CI/BACKEND
+        run: echo "Initialization process CI/BACKEND"
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '21'
+      - name: Install dependencies
+        run:  |
+          cd backend
+          npm install
+
+  cd-backend: 
+    runs-on: ubuntu-latest
+    needs: [ enviroments, ci-backend ]
     steps:
-      - name: print envioriments
+      - uses: actions/checkout@v4
+      - name: CD/BACKEND
+        run: echo "Initialization process CD/BACKEND"
+      - uses: docker/login-action@v3.3.0
+        with: 
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.3.0
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+      - name: Docker Build
         run: | 
-          echo "GITHUB SHA ${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }}"
-          echo "DATE: ${{ needs.enviroments.outputs.DATE }}"
+          cd backend 
+          docker build -t $REGISTRY/$IMAGE:agenda-backend-${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }} .
+          docker push $REGISTRY/$IMAGE:agenda-backend-$VERSION
 
-  # ci-backend: 
-  #   runs-on: ubuntu-latest
-  #   steps: 
-  #     - uses: actions/checkout@v4
-  #     - name: CI/BACKEND
-  #       run: echo "Initialization process CI/BACKEND"
-  #     - name: Setup Node.js environment
-  #       uses: actions/setup-node@v4.1.0
-  #       with:
-  #         node-version: '21'
-  #     - name: Install dependencies
-  #       run:  |
-  #         cd backend
-  #         npm install
+  ci-frontend: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI/FRONTEND
+        run: echo "Initialization process CI/FRONTEND"
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '21'
+      - name: Install dependencies
+        run:  |
+          cd frontend
+          npm install
 
-  # cd-backend: 
-  #   runs-on: ubuntu-latest
-  #   needs: [ ci-backend ]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: CD/BACKEND
-  #       run: echo "Initialization process CD/BACKEND"
-  #     - uses: docker/login-action@v3.3.0
-  #       with: 
-  #         username: ${{ secrets.DOCKER_USERNAME }}
-  #         password: ${{ secrets.DOCKER_PASSWORD }}
-  #     - name: Docker Setup QEMU
-  #       uses: docker/setup-qemu-action@v3.3.0
-  #     - name: Docker Setup Buildx
-  #       uses: docker/setup-buildx-action@v3.8.0
-  #     - name: Docker Build
-  #       run: | 
-  #         cd backend 
-  #         docker build -t $REGISTRY/$IMAGE:agenda-backend-$VERSION .
-  #         docker push $REGISTRY/$IMAGE:agenda-backend-$VERSION
-
-  # ci-frontend: 
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: CI/FRONTEND
-  #       run: echo "Initialization process CI/FRONTEND"
-  #     - name: Setup Node.js environment
-  #       uses: actions/setup-node@v4.1.0
-  #       with:
-  #         node-version: '21'
-  #     - name: Install dependencies
-  #       run:  |
-  #         cd frontend
-  #         npm install
-  # cd-frontend: 
-    # runs-on: ubuntu-latest
-    # needs: [ cd-backend, ci-frontend ]
-    # steps:
-    #   - uses: actions/checkout@v4
-    #   - name: CD/BACKEND
-    #     run: echo "Initialization process CD/FRONTEND"
-    #   - uses: docker/login-action@v3.3.0
-    #     with: 
-    #       username: ${{ secrets.DOCKER_USERNAME }}
-    #       password: ${{ secrets.DOCKER_PASSWORD }}
-    #   - name: Docker Setup QEMU
-    #     uses: docker/setup-qemu-action@v3.3.0
-    #   - name: Docker Setup Buildx
-    #     uses: docker/setup-buildx-action@v3.8.0
-    #   - name: Docker Build
-    #     run: | 
-    #       cd backend 
-    #       docker build -t $REGISTRY/$IMAGE:agenda-frontend-$VERSION .
-    #       docker push $REGISTRY/$IMAGE:agenda-frontend-$VERSION
+  cd-frontend: 
+    runs-on: ubuntu-latest
+    needs: [ enviroments , cd-backend, ci-frontend ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: CD/BACKEND
+        run: echo "Initialization process CD/FRONTEND"
+      - uses: docker/login-action@v3.3.0
+        with: 
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.3.0
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+      - name: Docker Build
+        run: | 
+          cd backend 
+          docker build -t $REGISTRY/$IMAGE:agenda-frontend-${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }} .
+          docker push $REGISTRY/$IMAGE:agenda-frontend-${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }}
