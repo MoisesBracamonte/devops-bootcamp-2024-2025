@@ -61,7 +61,7 @@ jobs:
         run: | 
           cd backend 
           docker build -t $REGISTRY/$IMAGE:agenda-backend-${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }} .
-          docker push $REGISTRY/$IMAGE:agenda-backend-$VERSION
+          docker push $REGISTRY/$IMAGE:agenda-backend-${{ needs.enviroments.outputs.GITHUB_SHA_SHORT }}
 
   ci-frontend: 
     runs-on: ubuntu-latest
